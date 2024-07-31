@@ -95,7 +95,8 @@ app.get('/api/files', async (req, res) => {
   // serving result from cache if available and not expired
   if (cache && (Date.now() - cache.timestamp) < CACHE_DURATION_MS) {
 	console.log('Serving from cache');
-    return res.json(cache.tree);
+	res.setHeader('Content-Type', 'application/json');
+	return res.send(JSON.stringify(cache.tree, null, '\t'));
   }
   
   // otherwise, fetching new data
@@ -106,7 +107,8 @@ app.get('/api/files', async (req, res) => {
       timestamp: Date.now(),
       tree: data
     };
-    res.json(data);
+	res.setHeader('Content-Type', 'application/json');
+    res.send(JSON.stringify(data, null, '\t'));
   } catch (err) {
 	console.log('Error while fetching new data');
     const error = err as any;
