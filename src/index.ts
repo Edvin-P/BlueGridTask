@@ -48,37 +48,37 @@ function transformToTree(items: Item[]): Tree {
   items.forEach(item => {
     const encodedUrl = encodeURI(item.fileUrl); // ensure the URL is properly encoded
     const url = new URL(encodedUrl);
-	const isDirectoryUrl = item.fileUrl.endsWith('/');
+    const isDirectoryUrl = item.fileUrl.endsWith('/');
     const parts = [url.hostname, ...url.pathname.split('/').filter(part => part).map(part => decodeURIComponent(part))]; // combine hostname and decoded pathname parts
 
     let currentTree: Tree = tree;
-	let currentDirName = '';
+    let currentDirName = '';
     parts.forEach((part, index) => {
-	  if (index === 0) {
-		// for the first part (i.e., hostname), initialize root directory if needed
-		if (!currentTree[part]) {
+      if (index === 0) {
+        // for the first part (i.e., hostname), initialize root directory if needed
+        if (!currentTree[part]) {
           currentTree[part] = [] as Array<Tree | string>;
         }
-		currentDirName = part;
-	  } else if (index < parts.length - 1 || isDirectoryUrl) {
+        currentDirName = part;
+      } else if (index < parts.length - 1 || isDirectoryUrl) {
         // otherwise, if not the last part or the last part is also a directory, create Tree for the subdirectory if needed, and "navigate" into it (set currentTree to it) if needed
         let foundDirectory = (currentTree[currentDirName] as Array<Tree | string>).find(entry => typeof entry === 'object' && entry !== null && entry[part]);
         if (!foundDirectory) {
-		  // initialize the subdirectory Tree if not already created, add it to the current directory elements array
+          // initialize the subdirectory Tree if not already created, add it to the current directory elements array
           foundDirectory = { [part]: [] };
           (currentTree[currentDirName] as Array<Tree | string>).push(foundDirectory);
         }
-		if (index < parts.length - 1) {
-		  // if not the last part, "navigate" into subdirectory
+        if (index < parts.length - 1) {
+          // if not the last part, "navigate" into subdirectory
           currentTree = foundDirectory as Tree;
-		  currentDirName = part;
-		}
+          currentDirName = part;
+        }
       } else { // index === parts.length - 1 && !isDirectoryUrl
         // add the last part as a file name to the current directory elements array
-		let foundFile = (currentTree[currentDirName] as Array<Tree | string>).find(entry => entry !== null && typeof entry === 'string' && entry === part);
-		if (!foundFile) { // this is likely always satisfied, but just in case
-			(currentTree[currentDirName] as Array<string | Tree>).push(part);
-		}
+        let foundFile = (currentTree[currentDirName] as Array<Tree | string>).find(entry => entry !== null && typeof entry === 'string' && entry === part);
+        if (!foundFile) { // this is likely always satisfied, but just in case
+          (currentTree[currentDirName] as Array<string | Tree>).push(part);
+        }
       }
     });
 
@@ -94,23 +94,23 @@ const port = 3000;
 app.get('/api/files', async (req, res) => {
   // serving result from cache if available and not expired
   if (cache && (Date.now() - cache.timestamp) < CACHE_DURATION_MS) {
-	console.log('Serving from cache');
-	res.setHeader('Content-Type', 'application/json');
-	return res.send(JSON.stringify(cache.tree, null, '\t'));
+    console.log('Serving from cache');
+    res.setHeader('Content-Type', 'application/json');
+    return res.send(JSON.stringify(cache.tree, null, '\t'));
   }
   
   // otherwise, fetching new data
   try {
-	console.log('Fetching new data');
+    console.log('Fetching new data');
     const data = await fetchDataAndTransform();
     cache = {
       timestamp: Date.now(),
       tree: data
     };
-	res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Type', 'application/json');
     res.send(JSON.stringify(data, null, '\t'));
   } catch (err) {
-	console.log('Error while fetching new data');
+    console.log('Error while fetching new data');
     const error = err as any;
     if (error.response) {
       if (error.response.status === 504) {
